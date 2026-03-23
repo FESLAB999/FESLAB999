@@ -46,7 +46,7 @@ IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".tif", ".
 PROJECT_EXTENSIONS = {".als", ".flp", ".logicx", ".ptx", ".rpp", ".cpr", ".band", ".reason"}
 
 # Keywords for classification refinement
-FINAL_KEYWORDS = ["final", "release", "delivered", "finished", "completed", "approved"]
+FINAL_KEYWORDS = ["final", "release", "released", "delivered", "finished", "completed", "approved"]
 MASTER_KEYWORDS = ["master", "mastered", "mastering", "premaster", "pre-master", "loudness"]
 DRAFT_KEYWORDS = ["draft", "demo", "wip", "work-in-progress", "sketch", "rough", "bounce", "render", "mix", "v1", "v2", "v3", "v4", "v5", "rev"]
 COVER_KEYWORDS = ["cover", "artwork", "album", "sleeve", "booklet", "design", "thumbnail", "poster"]
@@ -116,17 +116,19 @@ def extract_track_title(filename: str) -> str:
     name = re.sub(r"\d{4}[-_.]?\d{2}[-_.]?\d{2}", "", name)
     name = re.sub(r"(?<!\d)\d{6}(?!\d)", "", name)
 
-    # Remove common suffixes/prefixes
+    # Convert separators to spaces BEFORE keyword stripping so \b works
+    name = re.sub(r"[-_]+", " ", name)
+
+    # Remove common suffixes/prefixes (noise words)
     noise = (
         FINAL_KEYWORDS + MASTER_KEYWORDS + DRAFT_KEYWORDS
         + COVER_KEYWORDS + PROMPT_KEYWORDS
-        + ["v\\d+", "rev\\d+", "mix\\d+"]
+        + ["v\\d+", "rev\\d+", "mix\\d+", "dup"]
     )
     for word in noise:
-        name = re.sub(rf"[-_ ]*\b{word}\b[-_ ]*", " ", name, flags=re.IGNORECASE)
+        name = re.sub(rf"\b{word}\b", "", name, flags=re.IGNORECASE)
 
-    # Clean up separators
-    name = re.sub(r"[-_]+", " ", name)
+    # Clean up extra whitespace
     name = re.sub(r"\s+", " ", name).strip()
 
     if not name:
